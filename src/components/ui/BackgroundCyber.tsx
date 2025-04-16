@@ -16,6 +16,7 @@ interface MatrixColumnProps {
   };
   height: number;
   generateChar: () => string;
+  reducedMotion: boolean;
 }
 
 // Background animado inspirado no estilo Matrix com quedas de código
@@ -25,6 +26,66 @@ export default function BackgroundCyber() {
 
   // Estado para armazenar as dimensões da tela
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  // Estado para controlar se o componente está visível
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Estado para detectar dispositivos de baixo desempenho
+  const [lowPerformance, setLowPerformance] = useState(false);
+
+  // Estado para preferência de movimento reduzido
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  // Verificar a performance do dispositivo quando o componente montar
+  useEffect(() => {
+    // Detecta se é um dispositivo móvel
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // Verificação básica de performance
+    const checkPerformance = () => {
+      if (isMobile) {
+        // Reduz automaticamente a complexidade para dispositivos móveis
+        const startTime = performance.now();
+
+        // Teste simples de performance
+        for (let i = 0; i < 10000; i++) {
+          // Executa operação sem armazenar o resultado
+          void(i);
+        }
+
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+
+        // Se o teste demorar mais de 5ms, consideramos baixa performance
+        setLowPerformance(duration > 5);
+
+        // Verificar preferência de movimento reduzido
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        setReducedMotion(prefersReducedMotion);
+      }
+    };
+
+    checkPerformance();
+
+    // Configurar o IntersectionObserver para pausar quando fora da tela
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        setIsVisible(entry.isIntersecting);
+      });
+    }, { threshold: 0.1 });
+
+    const currentRef = containerRef.current;
+
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, []);
 
   // Atualizar dimensões ao carregar e redimensionar
   useEffect(() => {
@@ -63,33 +124,43 @@ export default function BackgroundCyber() {
   const columnCount = useMemo(() => {
     if (dimensions.width === 0) return 0;
 
-    // Densidade de colunas adaptada ao tamanho da tela
-    const density = dimensions.width < 768 ? 35 : 30;
-    const maxColumns = Math.min(48, Math.floor(dimensions.width / density));
-    return Math.max(10, maxColumns);
-  }, [dimensions.width]);
+    // Densidade de colunas adaptada ao tamanho da tela e performance
+    const baseDensity = dimensions.width < 768 ? 45 : 30;
+    const density = lowPerformance ? baseDensity * 1.5 : baseDensity;
+
+    // Reduz drasticamente em dispositivos de baixo desempenho
+    const maxColumns = lowPerformance
+      ? Math.min(20, Math.floor(dimensions.width / density))
+      : Math.min(48, Math.floor(dimensions.width / density));
+
+    return Math.max(8, maxColumns);
+  }, [dimensions.width, lowPerformance]);
 
   // Criar colunas de Matrix com variação de cores e velocidades
   const matrixColumns = useMemo(() => {
-    if (dimensions.width === 0) return [];
+    if (dimensions.width === 0 || !isVisible) return [];
 
-    return Array.from({ length: columnCount }).map((_, colIndex) => {
+    const adjustedCount = reducedMotion ? Math.floor(columnCount * 0.5) : columnCount;
+
+    return Array.from({ length: adjustedCount }).map((_, colIndex) => {
       // Características aleatórias para cada coluna
       const startDelay = Math.random() * 3;
 
-      // Variação natural de velocidade para melhor efeito visual
-      // Algumas colunas mais rápidas, outras mais lentas
+      // Ajustando velocidade para melhor performance em dispositivos móveis
       const speedFactor = Math.random();
+      const speedBase = lowPerformance ? 1.5 : 1;
       const speed = speedFactor < 0.2
-        ? 2 + Math.random() * 1 // 20% das colunas muito rápidas
+        ? (2 + Math.random() * 1) * speedBase // 20% das colunas muito rápidas
         : speedFactor > 0.8
-          ? 6 + Math.random() * 3 // 20% das colunas mais lentas
-          : 3 + Math.random() * 2; // 60% com velocidade média
+          ? (6 + Math.random() * 3) * speedBase // 20% das colunas mais lentas
+          : (3 + Math.random() * 2) * speedBase; // 60% com velocidade média
 
-      const left = `${(colIndex / columnCount) * 100}%`;
+      const left = `${(colIndex / adjustedCount) * 100}%`;
 
-      // Variação no comprimento também cria um efeito mais natural
-      const charCount = 6 + Math.floor(Math.random() * 14);
+      // Reduz o comprimento para melhor performance
+      const charCount = lowPerformance
+        ? 4 + Math.floor(Math.random() * 6)
+        : 6 + Math.floor(Math.random() * 14);
 
       // Variação na opacidade para adicionar profundidade
       const opacity = 0.4 + Math.random() * 0.6;
@@ -112,20 +183,23 @@ export default function BackgroundCyber() {
         hue
       };
     });
-  }, [columnCount, dimensions.width, generateMatrixChar]);
+  }, [columnCount, dimensions.width, generateMatrixChar, isVisible, lowPerformance, reducedMotion]);
 
   // Partículas flutuantes com movimento mais orgânico
   const particles = useMemo(() => {
-    if (dimensions.width === 0) return [];
+    if (dimensions.width === 0 || !isVisible) return [];
 
-    return Array.from({ length: 20 }).map((_, i) => {
+    // Reduz o número de partículas em dispositivos de baixo desempenho
+    const particleCount = lowPerformance ? 8 : reducedMotion ? 12 : 20;
+
+    return Array.from({ length: particleCount }).map((_, i) => {
       const size = Math.random() * 2.5 + 0.5;
       const left = Math.random() * 100;
       const top = Math.random() * 100;
       const duration = 6 + Math.random() * 8;
 
-      // Adicionar movimento lateral sutil para mais naturalidade
-      const xMovement = Math.random() * 20 - 10; // movimento de ±10%
+      // Movimento mais simples em dispositivos de baixo desempenho
+      const xMovement = lowPerformance ? 0 : Math.random() * 20 - 10; // movimento de ±10%
 
       return (
         <motion.span
@@ -141,12 +215,12 @@ export default function BackgroundCyber() {
             zIndex: 1
           }}
           initial={{ opacity: 0, scale: 0 }}
-          animate={{
+          animate={isVisible ? {
             opacity: [0.2, 0.7, 0.2],
             scale: [1, 1.5, 1],
             x: [0, xMovement, 0],
             y: [0, -30, 0]
-          }}
+          } : { opacity: 0 }}
           transition={{
             duration,
             repeat: Infinity,
@@ -156,11 +230,11 @@ export default function BackgroundCyber() {
         />
       );
     });
-  }, [dimensions.width]);
+  }, [dimensions.width, isVisible, lowPerformance, reducedMotion]);
 
   // Efeito de pulso suave que percorre a tela
   const pulseEffect = useMemo(() => {
-    if (dimensions.height === 0) return null;
+    if (dimensions.height === 0 || !isVisible || (lowPerformance && reducedMotion)) return null;
 
     return (
       <motion.div
@@ -169,7 +243,7 @@ export default function BackgroundCyber() {
           background: 'radial-gradient(circle at center, rgba(10, 255, 10, 0.2) 0%, transparent 50%)',
           backgroundSize: '150% 150%'
         }}
-        animate={{
+        animate={isVisible ? {
           backgroundPosition: [
             '0% 0%',
             '100% 100%',
@@ -177,7 +251,7 @@ export default function BackgroundCyber() {
             '100% 0%',
             '0% 0%'
           ]
-        }}
+        } : {}}
         transition={{
           duration: 20,
           ease: "linear",
@@ -185,7 +259,22 @@ export default function BackgroundCyber() {
         }}
       />
     );
-  }, [dimensions.height]);
+  }, [dimensions.height, isVisible, lowPerformance, reducedMotion]);
+
+  // Versão simplificada para dispositivos de muito baixa performance
+  if (lowPerformance && reducedMotion) {
+    return (
+      <div
+        ref={containerRef}
+        className="fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-black"
+        aria-hidden="true"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-background/90 to-background opacity-90" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJtYXRyaXhQYXR0ZXJuIiB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjx0ZXh0IHg9IjUiIHk9IjIwIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjEyIiBmaWxsPSJyZ2JhKDAsIDI1NSwgMCwgMC4yKSI+MTwvdGV4dD48dGV4dCB4PSIyNSIgeT0iMzAiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9InJnYmEoMCwgMjU1LCAwLCAwLjIpIj4wPC90ZXh0Pjx0ZXh0IHg9IjM1IiB5PSIxNSIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxNCIgZmlsbD0icmdiYSgwLCAyNTUsIDAsIDAuMSkiPk08L3RleHQ+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI21hdHJpeFBhdHRlcm4pIiAvPjwvc3ZnPg==')] opacity-20" />
+        <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-background opacity-70" />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -199,8 +288,8 @@ export default function BackgroundCyber() {
       {/* Efeito de pulso */}
       {pulseEffect}
 
-      {/* Efeito de escaneamento horizontal sutil */}
-      {dimensions.height > 0 && (
+      {/* Efeito de escaneamento horizontal sutil - desabilitado em dispositivos lentos */}
+      {dimensions.height > 0 && isVisible && !lowPerformance && (
         <motion.div
           className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent"
           animate={{
@@ -216,12 +305,13 @@ export default function BackgroundCyber() {
 
       {/* Colunas de Matrix */}
       <AnimatePresence>
-        {matrixColumns.map(column => (
+        {isVisible && matrixColumns.map(column => (
           <MatrixColumn
             key={`col-${column.id}`}
             column={column}
             height={dimensions.height}
             generateChar={generateMatrixChar}
+            reducedMotion={lowPerformance || reducedMotion}
           />
         ))}
       </AnimatePresence>
@@ -239,7 +329,7 @@ export default function BackgroundCyber() {
 }
 
 // Componente para cada coluna Matrix
-function MatrixColumn({ column, height, generateChar }: MatrixColumnProps) {
+function MatrixColumn({ column, height, generateChar, reducedMotion }: MatrixColumnProps) {
   const { id, left, startDelay, speed, opacity, charCount, initialChars, hue } = column;
 
   // Estado para os caracteres (inicializado com os caracteres gerados)
@@ -254,44 +344,59 @@ function MatrixColumn({ column, height, generateChar }: MatrixColumnProps) {
 
     const intervals: NodeJS.Timeout[] = [];
 
-    // Intervalo para pulso de brilho na cabeça da coluna
+    // Intervalo mais longo para dispositivos de baixo desempenho
     const glowInterval = setInterval(() => {
       setGlowIntensity(0.7 + Math.random() * 0.3); // Variação de 0.7 a 1.0
-    }, 500 + Math.random() * 1000);
+    }, (500 + Math.random() * 1000) * (reducedMotion ? 2 : 1));
 
     intervals.push(glowInterval);
 
-    // Intervalo para atualização de caracteres (diferente para cada posição)
-    chars.forEach((_, index) => {
-      // Cabeça da coluna muda mais rápido que a cauda
-      const updateFrequency = index === 0
-        ? 80 + Math.random() * 120 // 80-200ms para a cabeça
-        : index < 3
-          ? 200 + Math.random() * 300 // 200-500ms para os primeiros caracteres
-          : 500 + Math.random() * 1500; // 500-2000ms para o resto
+    // Menos atualizações de caracteres em dispositivos de baixo desempenho
+    if (!reducedMotion) {
+      chars.forEach((_, index) => {
+        // Cabeça da coluna muda mais rápido que a cauda
+        const updateFrequency = index === 0
+          ? 80 + Math.random() * 120 // 80-200ms para a cabeça
+          : index < 3
+            ? 200 + Math.random() * 300 // 200-500ms para os primeiros caracteres
+            : 500 + Math.random() * 1500; // 500-2000ms para o resto
 
-      // Probabilidade de mudança varia com a posição
-      const changeChance = index === 0
-        ? 0.5 // 50% para a cabeça
-        : index < 3
-          ? 0.4 // 40% para os primeiros caracteres
-          : 0.3; // 30% para o resto
+        // Probabilidade de mudança varia com a posição
+        const changeChance = index === 0
+          ? 0.5 // 50% para a cabeça
+          : index < 3
+            ? 0.4 // 40% para os primeiros caracteres
+            : 0.3; // 30% para o resto
 
-      const interval = setInterval(() => {
-        if (Math.random() < changeChance) {
-          setChars(prevChars => {
-            const newChars = [...prevChars];
-            newChars[index] = generateChar();
-            return newChars;
-          });
-        }
-      }, updateFrequency);
+        const interval = setInterval(() => {
+          if (Math.random() < changeChance) {
+            setChars(prevChars => {
+              const newChars = [...prevChars];
+              newChars[index] = generateChar();
+              return newChars;
+            });
+          }
+        }, updateFrequency);
 
-      intervals.push(interval);
-    });
+        intervals.push(interval);
+      });
+    } else {
+      // Versão simplificada para dispositivos de baixo desempenho
+      // Apenas atualiza alguns caracteres ocasionalmente
+      const simpleInterval = setInterval(() => {
+        const randomIndex = Math.floor(Math.random() * chars.length);
+        setChars(prevChars => {
+          const newChars = [...prevChars];
+          newChars[randomIndex] = generateChar();
+          return newChars;
+        });
+      }, 500 + Math.random() * 500);
+
+      intervals.push(simpleInterval);
+    }
 
     return () => intervals.forEach(interval => clearInterval(interval));
-  }, [chars, generateChar, height]);
+  }, [chars, generateChar, height, reducedMotion]);
 
   // Animação de movimento da coluna com efeito de aceleração natural
   return (
@@ -318,21 +423,25 @@ function MatrixColumn({ column, height, generateChar }: MatrixColumnProps) {
           ? 1
           : Math.max(0.1, 1 - (charIndex / (charCount * 0.7)));
 
-        // Brilho e tamanho variam conforme a posição
-        const glowAmount = isHead
-          ? `0 0 ${8 * glowIntensity}px rgba(10, 255, 10, ${0.8 * glowIntensity})`
-          : isNearHead
-            ? `0 0 ${3 * glowIntensity}px rgba(10, 255, 10, ${0.3 * glowIntensity})`
-            : 'none';
+        // Brilho reduzido em dispositivos de baixo desempenho
+        const glowAmount = reducedMotion
+          ? 'none'  // Sem glow em dispositivos de baixo desempenho
+          : isHead
+            ? `0 0 ${8 * glowIntensity}px rgba(10, 255, 10, ${0.8 * glowIntensity})`
+            : isNearHead
+              ? `0 0 ${3 * glowIntensity}px rgba(10, 255, 10, ${0.3 * glowIntensity})`
+              : 'none';
 
-        // Tamanho decresce gradualmente
-        const fontSize = isHead
-          ? "text-lg md:text-xl"
-          : isNearHead
-            ? "text-base md:text-lg"
-            : charIndex < 5
-              ? "text-sm md:text-base"
-              : "text-xs md:text-sm";
+        // Tamanho decresce gradualmente - menor em dispositivos de baixo desempenho
+        const fontSize = reducedMotion
+          ? (isHead ? "text-sm" : "text-xs")
+          : isHead
+            ? "text-lg md:text-xl"
+            : isNearHead
+              ? "text-base md:text-lg"
+              : charIndex < 5
+                ? "text-sm md:text-base"
+                : "text-xs md:text-sm";
 
         // Cores variam sutilmente com base no hue definido para a coluna
         const charColor = isHead
@@ -341,12 +450,14 @@ function MatrixColumn({ column, height, generateChar }: MatrixColumnProps) {
             ? `hsl(${hue}, 100%, ${70 - charIndex * 5}%)`
             : `hsl(${hue}, 100%, ${60 - charIndex * 3}%)`;
 
-        // Blur aumenta na cauda para dar sensação de movimento
-        const blurAmount = isHead
+        // Sem blur em dispositivos de baixo desempenho
+        const blurAmount = reducedMotion
           ? '0px'
-          : isNearHead
-            ? '0.2px'
-            : `${Math.min(1, charIndex * 0.1)}px`;
+          : isHead
+            ? '0px'
+            : isNearHead
+              ? '0.2px'
+              : `${Math.min(1, charIndex * 0.1)}px`;
 
         return (
           <motion.div
