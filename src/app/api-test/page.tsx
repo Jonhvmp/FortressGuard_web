@@ -88,8 +88,8 @@ export default function ApiTestPage() {
                   <label className="block font-terminal text-sm mb-1 text-muted-foreground">COMPRIMENTO:</label>
                   <input
                     type="number"
-                    min="8"
-                    max="64"
+                    min={8}
+                    max={32}
                     value={passwordLength}
                     onChange={(e) => setPasswordLength(Number(e.target.value))}
                     className="w-full px-3 py-2 bg-black/60 rounded border border-primary/30 focus:border-primary focus:outline-none text-primary font-terminal"
