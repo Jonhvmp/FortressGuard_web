@@ -395,7 +395,7 @@ export default function CTASection() {
           </div>
         </motion.div>
 
-        {/* Botão de compra */}
+        {/* Botão de compra - Ajustado para telas menores */}
         <AnimatePresence>
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -406,12 +406,12 @@ export default function CTASection() {
               href="https://buy.stripe.com/00g14i8PN3sX8co6ov"
               primary
               size="large"
-              className="font-terminal tracking-wider uppercase w-full md:w-auto px-8 py-4"
+              className="font-terminal tracking-wider uppercase px-4 sm:px-6 md:px-8 py-3 md:py-4 text-sm sm:text-base md:text-base max-w-full mx-auto"
             >
-              <span className="inline-flex items-center justify-center gap-2">
-                <PiCurrencyDollarBold size={22} />
+              <span className="inline-flex items-center justify-center gap-1 sm:gap-2">
+                <PiCurrencyDollarBold size={18} className="hidden xs:inline md:inline" />
                 <span>GARANTIR MEU TEMPLATE</span>
-                <PiArrowRightBold size={18} />
+                <PiArrowRightBold size={16} className="hidden xs:inline md:inline" />
               </span>
             </AnimatedButton>
           </motion.div>
