@@ -47,7 +47,7 @@ export default function Error({
               SISTEMA<span className="text-primary">COMPROMETIDO</span>
             </GlitchText>
 
-            <p className="text-xl md:text-2xl text-muted-foreground font-terminal tracking-widest mb-6">
+            <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground font-terminal tracking-normal xs:tracking-wider sm:tracking-widest mb-6 overflow-hidden">
               &lt;alerta::<span className="text-primary">falha_crítica_detectada</span>/&gt;
             </p>
 
