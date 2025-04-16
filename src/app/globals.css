@@ -197,3 +197,7 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--secondary);
 }
+
+a, button {
+  cursor: pointer;
+}

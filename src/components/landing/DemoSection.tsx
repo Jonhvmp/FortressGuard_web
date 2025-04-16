@@ -60,11 +60,7 @@ export default function DemoSection() {
     }
   };
 
-  // Gera uma senha automaticamente ao carregar o componente
-  useEffect(() => {
-    handleGeneratePassword();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Removido o useEffect que gerava senha automaticamente
 
   return (
     <section className="py-20 px-4 relative">
