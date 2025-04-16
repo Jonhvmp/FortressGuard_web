@@ -16,7 +16,7 @@ const navigationLinks = [
     icon: <FaCodeBranch className="mr-2" />,
     external: true
   },
-  { href: "/docs", label: "Documentação", icon: <FaServer className="mr-2" /> },
+  { href: "https://fortressguard.onrender.com/docs/", label: "Documentação", icon: <FaServer className="mr-2" /> },
   { href: "/api-test", label: "Testar API", icon: <FaLock className="mr-2" /> }
 ];
 

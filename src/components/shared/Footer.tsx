@@ -22,7 +22,7 @@ export default function Footer() {
             <Link href="https://www.linkedin.com/in/jonhvmp/" className="text-sm font-tech text-muted-foreground hover:text-white transition-colors">
               Linkedin
             </Link>
-            <Link href="/docs" className="text-sm font-tech text-muted-foreground hover:text-white transition-colors">
+            <Link href="https://fortressguard.onrender.com/docs/" className="text-sm font-tech text-muted-foreground hover:text-white transition-colors">
               Documentação
             </Link>
             <Link
