@@ -36,7 +36,7 @@ export default function NotFound() {
               ERRO<span className="text-accent">404</span>
             </GlitchText>
 
-            <p className="text-xl md:text-2xl text-muted-foreground font-terminal tracking-widest mb-2">
+            <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground font-terminal tracking-normal xs:tracking-wider sm:tracking-widest mb-2 overflow-hidden">
               &lt;acesso_negado::<span className="text-accent">página_não_encontrada</span>/&gt;
             </p>
 
