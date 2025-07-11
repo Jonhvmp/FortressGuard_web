@@ -1,5 +1,4 @@
 import HeroSection from '@src/components/landing/HeroSection';
-import CTASection from '@src/components/landing/CTASection';
 import DemoSection from '@src/components/landing/DemoSection';
 import FeaturesSection from '@src/components/landing/FeaturesSection';
 import SecurityStatsSection from '@src/components/landing/SecurityStatsSection';
@@ -13,7 +12,6 @@ export default function Home() {
       <FeaturesSection />
       <DemoSection />
       <SecurityStatsSection />
-      <CTASection />
     </>
   );
 }
